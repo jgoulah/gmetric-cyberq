@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'hpricot'
 require 'open-uri'
+require 'timeout'
 
 # send a ganglia metric
 def send_metric(name, value, type, unit)
@@ -23,10 +24,19 @@ HOLD     = 5
 ALARM    = 6
 SHUTDOWN = 7
 
-# status.xml, all.xml, or config.xml
+# change the hostname here
 host = "cyberq"
-doc = open("http://#{host}/config.xml") do
-  |f| Hpricot.XML(f)
+
+doc = nil
+begin
+Timeout::timeout(5) {
+  doc = open("http://#{host}/config.xml") do
+    |f| Hpricot.XML(f)
+  end
+}
+rescue Exception => e
+  puts e.to_s
+  exit
 end
 
 %w(COOK FOOD1 FOOD2 FOOD3).each do |xmlkey|
